@@ -26,7 +26,8 @@ router.post("/setPassword", async (req, res) => {
 });
 router.post("/add", (req, res) => {
   db.query(
-    "INSERT INTO `users` (`username`,`email`) VALUES ('aaa','aa@a.pl')",
+    "INSERT INTO `users` (`username`,`email`) VALUES (?,?)",
+    [req.body.username, req.body.email],
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
