@@ -1,14 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
+const db = require("../utils/db");
 const { decryptPass } = require("../utils/bcrypt");
 const bcrypt = require("../utils/bcrypt");
 const jwt = require("../utils/jwt");
 
 const mailer = require("../utils/mailer");
-router.get("/", (req, res) => {
-  res.send("bbbb");
-});
+
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   db.query(
@@ -84,7 +82,7 @@ router.post("/add", async (req, res) => {
 
 router.get("/table", (req, res) => {
   db.query(
-    "SELECT u.username, b.betScore, m.score FROM users u LEFT JOIN bets b ON u.id = b.userId LEFT JOIN matches m ON b.matchId = m.id;",
+    "SELECT * FROM users u WHERE u.id !=0 ORDER BY points DESC, perfectBets DESC, goodBets DESC;",
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
@@ -95,7 +93,7 @@ router.get("/table", (req, res) => {
         res.status(404).send("Users not found");
         return;
       }
-      console.log(results);
+      // console.log(results);
       res.send(results);
       // console.log(results[0]);
       // res.json(results[0]);

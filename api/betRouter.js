@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
+const db = require("../utils/db");
 const jwt = require("../utils/jwt");
+const operations = require("../utils/operations");
 router.post("/add", async (req, res) => {
   const token = req.cookies.token;
   if (await jwt.verifyToken(token)) {
@@ -71,6 +72,8 @@ router.post("/topscorer", async (req, res) => {
         // res.json(results[0]);
       }
     );
+    operations.updateTopScorerPoints();
+    operations.updatePoints();
   } else {
     res.status(401).send("Unauthorized");
   }
@@ -78,12 +81,12 @@ router.post("/topscorer", async (req, res) => {
 router.post("/winners", async (req, res) => {
   const token = req.cookies.token;
   if (await jwt.verifyToken(token)) {
-    const { first, second, third, userId } = req.body;
-    const winners = first + "," + second + "," + third;
+    const { first, second, userId } = req.body;
+
     console.log(userId);
     db.query(
-      "INSERT INTO winners_bets(`userId`,`bet`) VALUES (?,?) ON DUPLICATE KEY UPDATE bet = VALUES(bet);",
-      [userId, winners],
+      "INSERT INTO winners_bets(userId, first, second) VALUES (?,?,?) ON DUPLICATE KEY UPDATE first = VALUES(first), second=VALUE(second);",
+      [userId, first, second],
 
       (err, results) => {
         console.log(results);
@@ -100,6 +103,8 @@ router.post("/winners", async (req, res) => {
         // res.json(results[0]);
       }
     );
+    operations.upgradeWinnersPoints();
+    operations.updatePoints();
   } else {
     res.status(401).send("Unauthorized");
   }
@@ -120,8 +125,8 @@ router.get("/topscorer/:userId", (req, res) => {
         res.send([]);
         return;
       }
-      console.log(results);
-      res.send(results);
+
+      res.send(results[0]);
       // res.json(results[0]);
     }
   );
@@ -130,7 +135,7 @@ router.get("/winners/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(userId);
   db.query(
-    "SELECT `bet` FROM winners_bets WHERE `userId`=?",
+    "SELECT first,second FROM winners_bets WHERE `userId`=?",
     userId,
     (err, results) => {
       if (err) {
