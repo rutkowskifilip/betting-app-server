@@ -1,12 +1,13 @@
 const express = require("express");
-const displayRoutes = require("express-routemap");
-const routemap = require("express-routemap");
 const app = express();
 const port = 4000;
-const mysql = require("mysql");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+app.use(cookieParser());
 app.get("/", (req, res) => {
   res.send("serwer");
 });

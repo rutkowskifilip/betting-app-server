@@ -63,25 +63,30 @@ router.get("/unbet/:userId", (req, res) => {
     }
   );
 });
-router.post("/add", (req, res) => {
+router.post("/add", async (req, res) => {
   const { type, teamOne, teamTwo, time, date, location } = req.body;
-  db.query(
-    "INSERT INTO matches(`type`,`teamOne`,`teamTwo`, `time`,`date`,`location`) VALUES (?,?,?,?,?,?)",
-    [type, teamOne, teamTwo, time, date, location],
+  const token = req.cookies.token;
+  if (await jwt.verifyToken(token)) {
+    db.query(
+      "INSERT INTO matches(`type`,`teamOne`,`teamTwo`, `time`,`date`,`location`) VALUES (?,?,?,?,?,?)",
+      [type, teamOne, teamTwo, time, date, location],
 
-    (err, results) => {
-      if (err) {
-        console.error("Error querying database:", err);
-        res.status(500).send("Internal Server Error");
-        return;
-      }
-      if (results.affectedRows > 0) {
-        res.status(200).send("Match added correctly");
-      }
+      (err, results) => {
+        if (err) {
+          console.error("Error querying database:", err);
+          res.status(500).send("Internal Server Error");
+          return;
+        }
+        if (results.affectedRows > 0) {
+          res.status(200).send("Match added correctly");
+        }
 
-      // res.json(results[0]);
-    }
-  );
+        // res.json(results[0]);
+      }
+    );
+  } else {
+    res.status(401).send("Unauthorized");
+  }
 });
 
 module.exports = router;
