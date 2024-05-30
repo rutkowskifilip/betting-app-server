@@ -38,7 +38,6 @@ router.post("/setPassword", async (req, res) => {
   const password = await bcrypt.encryptPass(req.body.password);
   const auth = req.body.auth;
   const username = await jwt.verifyToken(auth);
-  // console.log("useraneme " + username);
 
   db.query(
     "UPDATE `users` SET `password`= ?  WHERE `username`=?;",
