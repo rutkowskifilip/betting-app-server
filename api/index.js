@@ -9,9 +9,11 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
+
 app.get("/", (req, res) => {
   res.send("serwer");
 });
+
 app.use("/user", require("./userRouter"));
 app.use("/match", require("./matchRouter"));
 app.use("/bet", require("./betRouter"));

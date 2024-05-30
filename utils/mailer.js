@@ -1,9 +1,10 @@
 const nodemailer = require("nodemailer");
+require("dotenv").config();
 const email = {
-  service: "gmail",
+  service: process.env.NODEMAILER_SERVICE,
   auth: {
-    user: "filipupcia13@gmail.com",
-    pass: "ucqr dyrj qxlg ixxw",
+    user: process.env.NODEMAILER_USER,
+    pass: process.env.NODEMAILER_PASS,
   },
 };
 const transporter = nodemailer.createTransport(email);
@@ -17,7 +18,9 @@ module.exports = {
         text:
           "Welcome " +
           username +
-          " http://192.168.0.141:3000/set-password/" +
+          " " +
+          process.env.CLIENT_URL +
+          "/set-password/" +
           link,
       });
     } catch (err) {
