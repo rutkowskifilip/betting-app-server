@@ -4,6 +4,8 @@ const db = require("../db");
 const { decryptPass } = require("../utils/bcrypt");
 const bcrypt = require("../utils/bcrypt");
 const jwt = require("../utils/jwt");
+
+const mailer = require("../utils/mailer");
 router.get("/", (req, res) => {
   res.send("bbbb");
 });
@@ -21,10 +23,7 @@ router.post("/login", async (req, res) => {
       if (results.length > 0) {
         const userId = results[0].id;
         if (await decryptPass(password, results[0].password)) {
-          const token = await jwt.createToken(
-            { username: username, id: userId },
-            "1h"
-          );
+          const token = await jwt.createToken({ id: userId }, "3h");
           res.setHeader("Authorization", token);
           res.send({ id: userId, token: token });
         } else {
@@ -37,12 +36,15 @@ router.post("/login", async (req, res) => {
   );
 });
 router.post("/setPassword", async (req, res) => {
-  console.log(req.body);
+  console.log("here");
   const password = await bcrypt.encryptPass(req.body.password);
-  const id = req.body.id;
+  const auth = req.body.auth;
+  const username = await jwt.verifyToken(auth);
+  // console.log("useraneme " + username);
+
   db.query(
-    "UPDATE `users` SET `password`= ?  WHERE `id`=?;",
-    [password, id],
+    "UPDATE `users` SET `password`= ?  WHERE `username`=?;",
+    [password, username],
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
@@ -57,18 +59,21 @@ router.post("/setPassword", async (req, res) => {
 });
 router.post("/add", async (req, res) => {
   const token = req.cookies.token;
+  const { username, email } = req.body;
   if (await jwt.verifyToken(token)) {
     db.query(
       "INSERT INTO `users` (`username`,`email`) VALUES (?,?)",
-      [req.body.username, req.body.email],
-      (err, results) => {
+      [username, email],
+      async (err, results) => {
         if (err) {
           console.error("Error querying database:", err);
           res.status(500).send("Internal Server Error");
           return;
         }
         if (results.affectedRows > 0) {
+          const auth = await jwt.createToken(username, "72h");
           res.status(200).send("User added correctly");
+          mailer.sendMail(email, username, auth);
         }
       }
     );

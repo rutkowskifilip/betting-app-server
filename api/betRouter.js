@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
-
+const jwt = require("../utils/jwt");
 router.post("/add", async (req, res) => {
   const token = req.cookies.token;
   if (await jwt.verifyToken(token)) {
     const { userId, matchId, score } = req.body;
+    console.log(userId);
     db.query(
       "INSERT INTO bets(`userId`,`matchId`,`betScore`) VALUES (?,?,?)",
       [userId, matchId, score],

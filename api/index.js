@@ -3,6 +3,7 @@ const app = express();
 const port = 4000;
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+
 require("dotenv").config();
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
