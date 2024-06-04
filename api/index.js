@@ -3,17 +3,24 @@ const app = express();
 const port = 4000;
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-
+const db = require("../utils/db");
+const bcrypt = require("../utils/bcrypt");
 require("dotenv").config();
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   res.send("serwer");
 });
-
+db.connect()
+  .then(() => {
+    console.log("Connected to PostgreSQL database");
+  })
+  .catch((err) => {
+    console.error("Error connecting to PostgreSQL database", err);
+  });
 app.use("/user", require("./userRouter"));
 app.use("/match", require("./matchRouter"));
 app.use("/bet", require("./betRouter"));
