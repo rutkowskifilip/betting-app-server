@@ -19,7 +19,7 @@ module.exports = {
       let decoded = await jwt.verify(token, process.env.TOKEN_KEY);
       return decoded.user;
     } catch (ex) {
-      return { message: ex.message };
+      return false;
     }
   },
 };

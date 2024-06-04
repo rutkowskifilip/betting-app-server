@@ -9,7 +9,7 @@ const email = {
 };
 const transporter = nodemailer.createTransport(email);
 module.exports = {
-  sendMail: async (receiver, username, link) => {
+  sendMail: async (receiver, link) => {
     try {
       let info = await transporter.sendMail({
         from: "Admin",
@@ -17,8 +17,6 @@ module.exports = {
         subject: "typowanie",
         text:
           "Welcome " +
-          username +
-          " " +
           process.env.CLIENT_URL +
           "/set-password/" +
           link,
