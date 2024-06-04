@@ -10,7 +10,7 @@ const mailer = require("../utils/mailer");
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   db.query(
-    "SELECT `id`,`password` FROM `users`  WHERE `username`=?;",
+    "SELECT id,password FROM users  WHERE username=?;",
     [username],
     async (err, results) => {
       if (err) {

@@ -15,11 +15,8 @@ module.exports = {
         from: "Admin",
         to: receiver,
         subject: "typowanie",
-        text:
-          "Welcome " +
-          process.env.CLIENT_URL +
-          "/set-password/" +
-          link,
+        text: "Welcome " + process.env.CLIENT_URL + "/set-password/" + link,
+        html: `<h1>Witaj!</h1><p>${process.env.CLIENT_URL}/set-password/${link}</p>`,
       });
     } catch (err) {
       console.error("Error occurred:", err);

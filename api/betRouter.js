@@ -9,7 +9,7 @@ router.post("/add", async (req, res) => {
     const { userId, matchId, score } = req.body;
     console.log(userId);
     db.query(
-      "INSERT INTO bets(`userId`,`matchId`,`betScore`) VALUES (?,?,?)",
+      "INSERT INTO bets(userId, matchId, betScore) VALUES (?,?,?)",
       [userId, matchId, score],
 
       (err, results) => {
@@ -30,10 +30,10 @@ router.post("/add", async (req, res) => {
   }
 });
 
-router.get(`/:userId`, (req, res) => {
+router.get("/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(userId);
-  db.query("SELECT * FROM bets WHERE `userId`=?", userId, (err, results) => {
+  db.query("SELECT * FROM bets WHERE userId=?", userId, (err, results) => {
     if (err) {
       console.error("Error querying database:", err);
       res.status(500).send("Internal Server Error");
@@ -54,7 +54,7 @@ router.post("/topscorer", async (req, res) => {
     const { player, position, country, userId } = req.body;
     console.log(userId);
     db.query(
-      "INSERT INTO topscorer_bets(`userId`,`player`,`country`,`position`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE player = VALUES(player), country=VALUES(country), position=VALUES(position);",
+      "INSERT INTO topscorer_bets(userId,player,country,position) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE player = VALUES(player), country=VALUES(country), position=VALUES(position);",
       [userId, player, country, position],
 
       (err, results) => {
@@ -113,7 +113,7 @@ router.get("/topscorer/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(userId);
   db.query(
-    "SELECT `player`,`position`,`country` FROM topscorer_bets WHERE `userId`=?",
+    "SELECT player, position, country FROM topscorer_bets WHERE userId=?",
     userId,
     (err, results) => {
       if (err) {
@@ -135,7 +135,7 @@ router.get("/winners/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(userId);
   db.query(
-    "SELECT first,second FROM winners_bets WHERE `userId`=?",
+    "SELECT first,second FROM winners_bets WHERE userId=?",
     userId,
     (err, results) => {
       if (err) {

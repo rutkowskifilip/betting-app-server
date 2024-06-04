@@ -70,7 +70,7 @@ router.post("/add", async (req, res) => {
   const token = req.cookies.token;
   if (await jwt.verifyToken(token)) {
     db.query(
-      "INSERT INTO matches(`type`,`teamOne`,`teamTwo`, `time`,`date`,`location`, weight) VALUES (?,?,?,?,?,?,?)",
+      "INSERT INTO matches(type,teamOne,teamTwo, time,date,location, weight) VALUES (?,?,?,?,?,?,?)",
       [type, teamOne, teamTwo, time, date, location, weight],
 
       (err, results) => {
