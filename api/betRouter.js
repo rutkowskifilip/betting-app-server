@@ -1,122 +1,142 @@
 const express = require("express");
+const auth = require("../utils/auth");
 const router = express.Router();
 const db = require("../utils/db");
 const jwt = require("../utils/jwt");
 const operations = require("../utils/operations");
-router.post("/add", async (req, res) => {
-  const token = req.cookies.token;
-  if (await jwt.verifyToken(token)) {
-    const { userId, matchId, score } = req.body;
-    console.log(userId);
-    try {
-      const result = await db.query(
-        "INSERT INTO bets(userId, matchId, betScore, points) VALUES ($1, $2, $3, 0)",
-        [userId, matchId, score]
-      );
-      res.status(200).send("Bet added successfully");
-    } catch (err) {
-      console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+router.post("/add", auth, async (req, res) => {
+  const { userId, matchId, score } = req.body;
+
+  db.query(
+    "INSERT INTO bets(userId, matchId, betScore) VALUES (?,?,?)",
+    [userId, matchId, score],
+
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.affectedRows > 0) {
+        return res.status(200).send("Bet added succesfully");
+      } else {
+        return res
+          .status(400)
+          .send("Unexpected: Insert did not affect any rows");
+      }
     }
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+  );
+  operations.updateBetsPoints();
+  operations.updatePoints();
+  return;
 });
 
 router.get("/:userId", async (req, res) => {
   const userId = req.params.userId;
-  console.log(userId);
-  try {
-    const result = await db.query("SELECT * FROM bets WHERE userId=$1", [
-      userId,
-    ]);
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-router.post("/topscorer", async (req, res) => {
-  const token = req.cookies.token;
-  if (await jwt.verifyToken(token)) {
-    const { player, position, country, userId } = req.body;
-    console.log(userId);
-    try {
-      const result = await db.query(
-        "INSERT INTO topscorer_bets(userId,player,country,position) VALUES ($1, $2, $3, $4) ON CONFLICT (userId) DO UPDATE SET player = EXCLUDED.player, country = EXCLUDED.country, position = EXCLUDED.position",
-        [userId, player, country, position]
-      );
-      res.status(200).send("Bet added successfully");
-    } catch (err) {
+
+  db.query("SELECT * FROM bets WHERE userId=?", userId, (err, results) => {
+    if (err) {
       console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+      return res.status(500).send("Internal Server Error");
     }
-    operations.updateTopScorerPoints();
-    operations.updatePoints();
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+    if (results.length === 0) {
+      return res.send([]);
+    }
+
+    return res.send(results);
+  });
+});
+router.post("/topscorer", auth, async (req, res) => {
+  const { player, position, country, userId } = req.body;
+
+  db.query(
+    "INSERT INTO topscorer_bets(userId,player,country,position) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE player = VALUES(player), country=VALUES(country), position=VALUES(position);",
+    [userId, player, country, position],
+
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.affectedRows > 0) {
+        return res.status(200).send("Bet added succesfully");
+      } else {
+        return res
+          .status(400)
+          .send("Unexpected: Insert did not affect any rows");
+      }
+
+      // res.json(results[0]);
+    }
+  );
+  operations.updateTopScorerPoints();
+  operations.updatePoints();
+  return;
 });
 
-router.post("/winners", async (req, res) => {
-  const token = req.cookies.token;
-  if (await jwt.verifyToken(token)) {
-    const { first, second, userId } = req.body;
+router.post("/winners", auth, async (req, res) => {
+  const { first, second, userId } = req.body;
 
-    console.log(userId);
-    try {
-      const result = await db.query(
-        "INSERT INTO winners_bets(userId, first, second) VALUES ($1, $2, $3) ON CONFLICT (userId) DO UPDATE SET first = EXCLUDED.first, second = EXCLUDED.second",
-        [userId, first, second]
-      );
-      res.status(200).send("Bet added successfully");
-    } catch (err) {
-      console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+  db.query(
+    "INSERT INTO winners_bets(userId, first, second) VALUES (?,?,?) ON DUPLICATE KEY UPDATE first = VALUES(first), second=VALUE(second);",
+    [userId, first, second],
+
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.affectedRows > 0) {
+        return res.status(200).send("Bet added succesfully");
+      } else {
+        return res
+          .status(400)
+          .send("Unexpected: Insert did not affect any rows");
+      }
     }
-    operations.updateWinnersPoints();
-    operations.updatePoints();
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+  );
+  operations.updateWinnersPoints();
+  operations.updatePoints();
+  return;
 });
 
-router.get("/topscorer/:userId", async (req, res) => {
+router.get("/topscorer/:userId", auth, async (req, res) => {
   const userId = req.params.userId;
-  console.log(userId);
-  try {
-    const result = await db.query(
-      "SELECT player, position, country FROM topscorer_bets WHERE userId=$1",
-      [userId]
-    );
-    if (result.rows.length === 0) {
-      res.status(201).send([]);
-      return;
+
+  db.query(
+    "SELECT player, position, country FROM topscorer_bets WHERE userId=?",
+    userId,
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        return res.send([]);
+      }
+
+      return res.send(results[0]);
     }
-    res.send(result.rows[0]);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
 });
 
-router.get("/winners/:userId", async (req, res) => {
+router.get("/winners/:userId", auth, async (req, res) => {
   const userId = req.params.userId;
-  console.log(userId);
-  try {
-    const result = await db.query(
-      "SELECT first,second FROM winners_bets WHERE userId=$1",
-      [userId]
-    );
-    if (result.rows.length === 0) {
-      res.status(201).send([]);
-      return;
+  db.query(
+    "SELECT first,second FROM winners_bets WHERE userId=?",
+    userId,
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        return res.send([]);
+      }
+
+      return res.send(results);
     }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
 });
 
 module.exports = router;

@@ -1,82 +1,78 @@
 const express = require("express");
+const auth = require("../utils/auth");
 const router = express.Router();
 const db = require("../utils/db");
-const jwt = require("../utils/jwt");
+
 const operations = require("../utils/operations");
 
-router.get("/all", async (req, res) => {
-  const query = {
-    text: "SELECT * FROM groups",
-  };
-
-  try {
-    const result = await db.query(query);
-    if (result.rows.length === 0) {
-      res.status(404).send("Groups not found");
-      return;
-    }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-router.post("/save", async (req, res) => {
-  const token = req.cookies.token;
-  if (await jwt.verifyToken(token)) {
-    const groups = req.body.groups;
-    const id = req.body.userId;
-    console.log(id);
-    const query = {
-      text: `INSERT INTO groups_bets (userid, A, B, C, D, E, F)
-              VALUES ($1, $2, $3, $4, $5, $6, $7)
-              ON CONFLICT (userid) DO UPDATE
-              SET A = $2, B = $3, C = $4, D = $5, E = $6, F = $7`,
-      values: [
-        id,
-        groups[0].teams.join(","),
-        groups[1].teams.join(","),
-        groups[2].teams.join(","),
-        groups[3].teams.join(","),
-        groups[4].teams.join(","),
-        groups[5].teams.join(","),
-      ],
-    };
-
-    try {
-      await db.query(query);
-      res.status(200).send("Groups order saved correctly");
-      operations.updateGroupsPoints();
-      operations.updatePoints();
-    } catch (err) {
+router.get("/all", auth, (req, res) => {
+  db.query("SELECT * FROM groups", (err, results) => {
+    if (err) {
       console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+      return res.status(500).send("Internal Server Error");
     }
-  } else {
-    res.status(401).send("Unauthorized");
-  }
-});
+    if (results.length === 0) {
+      return res.status(201).send("Groups not found");
+    }
 
-router.get("/:userId", async (req, res) => {
+    return res.send(results);
+    // res.json(results[0]);
+  });
+});
+router.post("/save", auth, async (req, res) => {
+  const groups = req.body.groups;
+  const id = req.body.userId;
+
+  db.query(
+    "INSERT INTO groups_bets (userId, A, B, C, D, E, F) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE A = VALUES(A), B=VALUES(B), C=VALUES(C), D=VALUES(D), E=VALUES(E), F=VALUES(F);",
+    [
+      id,
+      groups[0].teams.join(","),
+      groups[1].teams.join(","),
+      groups[2].teams.join(","),
+      groups[3].teams.join(","),
+      groups[4].teams.join(","),
+      groups[5].teams.join(","),
+    ],
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.affectedRows > 0) {
+        return res.status(200).send("Groups order saved correctly");
+      } else {
+        return res
+          .status(400)
+          .send("Unexpected: Insert did not affect any rows");
+      }
+
+      // res.json(results[0]);
+    }
+  );
+  operations.updateGroupsPoints();
+  operations.updatePoints();
+  return;
+});
+router.get("/:userId", auth, (req, res) => {
   const id = req.params.userId;
+  db.query(
+    "SELECT A,B,C,D,E,F FROM groups_bets WHERE userId=?",
+    id,
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
 
-  const query = {
-    text: "SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = $1",
-    values: [id],
-  };
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        res.status(201).send("Groups not found");
+        return res.status(500).send("Internal Server Error");
+      }
 
-  try {
-    const result = await db.query(query);
-    if (result.rows.length === 0) {
-      res.status(201).send([]);
-      return;
+      return res.send(results[0]);
+      // res.json(results[0]);
     }
-    res.send(result.rows[0]);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
 });
-
 module.exports = router;

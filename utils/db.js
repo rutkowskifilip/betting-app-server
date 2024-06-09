@@ -1,12 +1,17 @@
+const mysql = require("mysql");
 require("dotenv").config();
-const { Client } = require("pg");
-const dbConfig = {
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  host: process.env.POSTGRES_HOST,
-  database: process.env.POSTGRES_DATABASE,
-  port: 5432, // Default PostgreSQL port
-  ssl: { rejectUnauthorized: true },
-};
-const db = new Client(dbConfig);
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error("Error connecting to MySQL database:", err);
+    return;
+  }
+  console.log("Connected to MySQL database");
+});
 module.exports = db;

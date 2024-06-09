@@ -3,136 +3,132 @@ const router = express.Router();
 const db = require("../utils/db");
 const jwt = require("../utils/jwt");
 const operations = require("../utils/operations");
-
+const auth = require("../utils/auth");
 router.get("/", (req, res) => {
   res.send("bbbb");
 });
 
-router.get("/all", async (req, res) => {
-  const query = {
-    text: "SELECT * FROM matches ORDER BY date, time",
-  };
-
-  try {
-    const result = await db.query(query);
-    if (result.rows.length === 0) {
-      res.status(404).send("Matches not found");
-      return;
+router.get("/all", auth, (req, res) => {
+  db.query("SELECT * FROM matches ORDER BY date, time", (err, results) => {
+    if (err) {
+      console.error("Error querying database:", err);
+      return res.status(500).send("Internal Server Error");
     }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+    if (results.length === 0) {
+      return res.status(201).send("Matches not found");
+    }
+
+    return res.send(results);
+    // res.json(results[0]);
+  });
 });
 
-router.get("/all/:userId", async (req, res) => {
+router.get("/all/:userId", auth, (req, res) => {
   const userId = req.params.userId;
-
-  const query = {
-    text: "SELECT matches.*, bets.betScore FROM matches LEFT JOIN bets ON matches.id = bets.matchId AND bets.userId = $1 ORDER BY date, time",
-    values: [userId],
-  };
-
-  try {
-    const result = await db.query(query);
-    if (result.rows.length === 0) {
-      res.status(404).send("Matches not found");
-      return;
-    }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-router.get("/unbet/:userId", async (req, res) => {
-  const userId = req.params.userId;
-
-  const query = {
-    text: "SELECT m.* FROM matches m LEFT JOIN bets b ON m.id = b.matchId AND b.userId = $1 WHERE b.userId IS NULL ORDER BY date, time",
-    values: [userId],
-  };
-
-  try {
-    const result = await db.query(query);
-    if (result.rows.length === 0) {
-      res.status(201).send([]);
-      return;
-    }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-router.post("/add", async (req, res) => {
-  const { type, teamOne, teamTwo, time, date, location, weight } = req.body;
-  const token = req.cookies.token;
-
-  if (await jwt.verifyToken(token)) {
-    const query = {
-      text: "INSERT INTO matches (type, teamOne, teamTwo, time, date, location, weight, score) VALUES ($1, $2, $3, $4, $5, $6, $7, '') RETURNING *",
-      values: [type, teamOne, teamTwo, time, date, location, weight],
-    };
-
-    try {
-      const result = await db.query(query);
-      if (result.rows.length > 0) {
-        res.status(200).send("Match added correctly");
+  db.query(
+    "SELECT matches.*, bets.betScore FROM matches LEFT JOIN bets ON matches.id = bets.matchId AND bets.userId = ? ORDER BY date, time",
+    userId,
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
       }
-    } catch (err) {
-      console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+      if (results.length === 0) {
+        return res.status(201).send("Matches not found");
+      }
+      return res.send(results);
+      // res.json(results[0]);
     }
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+  );
 });
 
-router.post("/score", async (req, res) => {
-  const token = req.cookies.token;
-  if (await jwt.verifyToken(token)) {
-    const { matchId, score } = req.body;
-
-    const query = {
-      text: "UPDATE matches SET score = $1 WHERE id = $2",
-      values: [score, matchId],
-    };
-
-    try {
-      await db.query(query);
-      res.status(200).send("Score added successfully");
-      operations.updateBetsPoints();
-      operations.updatePoints();
-    } catch (err) {
-      console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+router.get("/unbet/:userId", auth, (req, res) => {
+  const userId = req.params.userId;
+  db.query(
+    "SELECT m.* FROM matches m LEFT JOIN bets b ON m.id = b.matchId AND b.userId = ? WHERE b.userId IS NULL ORDER BY date, time",
+    userId,
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        return res.status(201).send("Matches not found");
+      }
+      return res.send(results);
+      // res.json(results[0]);
     }
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+  );
 });
 
-router.get("/noscore", async (req, res) => {
-  const query = {
-    text: "SELECT * FROM matches WHERE score IS NULL OR score = '' ORDER BY date, time",
-  };
+router.post("/add", auth, async (req, res) => {
+  const { type, teamOne, teamTwo, time, date, location, weight } = req.body;
 
-  try {
-    const result = await db.query(query);
-    console.log(result.rows);
-    if (result.rows.length === 0) {
-      res.status(201).send("Matches not found");
-      return;
+  db.query(
+    "INSERT INTO matches(type,teamOne,teamTwo, time,date,location, weight) VALUES (?,?,?,?,?,?,?)",
+    [type, teamOne, teamTwo, time, date, location, weight],
+
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.affectedRows > 0) {
+        return res.status(200).send("Match added correctly");
+      } else {
+        return res
+          .status(400)
+          .send("Unexpected: Insert did not affect any rows");
+      }
+
+      // res.json(results[0]);
     }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
 });
 
+router.post("/score", auth, async (req, res) => {
+  const { matchId, score } = req.body;
+
+  db.query(
+    "UPDATE matches SET score=? WHERE id=?",
+    [score, matchId],
+
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.affectedRows > 0) {
+        return res.status(200).send("Score added succesfully");
+      } else {
+        return res
+          .status(400)
+          .send("Unexpected: Update did not affect any rows");
+      }
+
+      // res.json(results[0]);
+    }
+  );
+
+  operations.updateBetsPoints();
+  operations.updatePoints();
+});
+
+router.get("/noscore", auth, async (req, res) => {
+  db.query(
+    "SELECT * FROM matches WHERE score IS NULL OR score = '' ORDER BY date, time",
+
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        return res.status(201).send("Matches not found");
+      }
+
+      return res.send(results);
+    }
+  );
+});
 module.exports = router;

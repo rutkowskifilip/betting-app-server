@@ -5,32 +5,33 @@ const bcrypt = require("../utils/bcrypt");
 const jwt = require("../utils/jwt");
 const mailer = require("../utils/mailer");
 const db = require("../utils/db");
+const auth = require("../utils/auth");
 
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const query = {
-    text: "SELECT id, password FROM users WHERE username = $1",
-    values: [username],
-  };
-
-  try {
-    const result = await db.query(query);
-    if (result.rows.length > 0) {
-      const userId = result.rows[0].id;
-      if (await bcrypt.decryptPass(password, result.rows[0].password)) {
-        const token = await jwt.createToken({ id: userId }, "3h");
-        res.setHeader("Authorization", token);
-        res.send({ id: userId, token: token });
-      } else {
-        res.status(409).send("Incorrect password");
+  db.query(
+    "SELECT id,password FROM users  WHERE username=?;",
+    [username],
+    async (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        res.status(500).send("Internal Server Error");
+        return;
       }
-    } else {
-      res.status(409).send("User with this username doesn't exist");
+      if (results.length > 0) {
+        const userId = results[0].id;
+        if (await bcrypt.decryptPass(password, results[0].password)) {
+          const token = await jwt.createToken({ id: userId }, "1h");
+          res.setHeader("Authorization", "Bearer " + token);
+          return res.send({ id: userId, token: token });
+        } else {
+          return res.status(409).send("Incorrect password");
+        }
+      } else {
+        return res.status(409).send("User with this username doesn't exist");
+      }
     }
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
 });
 
 router.post("/setPassword", async (req, res) => {
@@ -39,52 +40,58 @@ router.post("/setPassword", async (req, res) => {
   const auth = req.body.auth;
   const email = await jwt.verifyToken(auth);
 
-  const query = {
-    text: "SELECT * FROM users WHERE username = $1",
-    values: [username],
-  };
+  db.query(
+    "SELECT * FROM users WHERE username = ?;",
+    [username],
+    (err, existingUser) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
 
-  try {
-    const result = await db.query(query);
-    if (result.rows.length > 0) {
-      // Username already exists
-      res
-        .status(409)
-        .send("Username already in use. Please choose a different one.");
-      return;
+      if (existingUser.length > 0) {
+        // Username already exists
+        return res
+          .status(409)
+          .send("Username already in use. Please choose a different one.");
+      }
+
+      db.query(
+        "INSERT INTO users SET email=?, password= ?, username=?",
+        [password, username, email],
+        (err, results) => {
+          if (err) {
+            console.error("Error querying database:", err);
+            return res.status(500).send("Internal Server Error");
+          }
+
+          if (results.affectedRows > 0) {
+            res.status(200).send("Password has been saved");
+          } else {
+            // console.warn("Unexpected: Update did not affect any rows.");
+            res.status(400).send("Unexpected: Update did not affect any rows.");
+          }
+        }
+      );
     }
-
-    const updateQuery = {
-      text: "UPDATE users SET password = $1, username = $2 WHERE email = $3",
-      values: [password, username, email],
-    };
-
-    try {
-      await db.query(updateQuery);
-      res.status(200).send("Password has been saved");
-    } catch (err) {
-      console.error("Error updating database:", err);
-      res.status(500).send("Internal Server Error (Update failed)");
-    }
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
 });
 
-router.post("/add", async (req, res) => {
-  const token = req.cookies.token;
+router.post("/add", auth, async (req, res) => {
   const email = req.body.email;
 
-  if (await jwt.verifyToken(token)) {
-    const query = {
-      text: "SELECT * FROM users WHERE email = $1",
-      values: [email],
-    };
+  db.query(
+    "SELECT * FROM created_users WHERE email = ?",
+    email,
+    (err, existingUser) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
 
-    try {
-      const result = await db.query(query);
-      if (result.rows.length > 0) {
+      if (existingUser.length > 0) {
         // User with the same email already exists
         res
           .status(409)
@@ -92,45 +99,60 @@ router.post("/add", async (req, res) => {
         return;
       }
 
-      const insertQuery = {
-        text: "INSERT INTO users (email) VALUES ($1) RETURNING *",
-        values: [email],
-      };
+      // Email is available, proceed with user creation
+      db.query(
+        "INSERT INTO created_users (email) VALUES (?)",
+        email,
+        async (err, results) => {
+          if (err) {
+            console.error("Error querying database:", err);
+            res.status(500).send("Internal Server Error");
+            return;
+          }
 
-      try {
-        const result = await db.query(insertQuery);
-        const auth = await jwt.createToken(result.rows[0].email, "72h");
-        res.status(201).send("User created successfully");
-        mailer.sendMail(result.rows[0].email, auth);
-      } catch (err) {
-        console.error("Error inserting into database:", err);
-        res.status(500).send("Internal Server Error (Insert failed)");
-      }
-    } catch (err) {
-      console.error("Error querying database:", err);
-      res.status(500).send("Internal Server Error");
+          if (results.affectedRows > 0) {
+            const token = await jwt.createToken(email, "72h");
+            res.status(200).send("User created successfully");
+            mailer.sendMail(email, token);
+          } else {
+            res.status(400).send("Unexpected: Insert did not affect any rows");
+          }
+        }
+      );
     }
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+  );
 });
 
-router.get("/table", async (req, res) => {
-  const query = {
-    text: "SELECT * FROM users u WHERE u.id != 1 ORDER BY points DESC, perfectBets DESC, goodBets DESC",
-  };
-
-  try {
-    const result = await db.query(query);
-    if (result.rows.length === 0) {
-      res.status(404).send("Users not found");
-      return;
+router.get("/table", auth, (req, res) => {
+  db.query(
+    "SELECT * FROM users u WHERE u.id !=0 ORDER BY points DESC, perfectBets DESC, goodBets DESC;",
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        return res.status(201).send("Users not found");
+      }
+      return res.send(results);
     }
-    res.send(result.rows);
-  } catch (err) {
-    console.error("Error querying database:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  );
+});
+router.get("/all", auth, async (req, res) => {
+  db.query(
+    "SELECT username, id FROM users u WHERE u.id != 0 ORDER BY username;",
+    (err, results) => {
+      if (err) {
+        console.error("Error querying database:", err);
+        return res.status(500).send("Internal Server Error");
+      }
+      if (results.length === 0) {
+        return res.status(201).send("Users not found");
+      }
+
+      return res.send(results);
+    }
+  );
 });
 
 module.exports = router;
