@@ -9,10 +9,10 @@ router.get("/all", auth, (req, res) => {
   db.query("SELECT * FROM groups", (err, results) => {
     if (err) {
       console.error("Error querying database:", err);
-      return res.status(500).send("Internal Server Error");
+      return res.status(500).send("Błąd wewnętrzny serwera");
     }
     if (results.length === 0) {
-      return res.status(201).send("Groups not found");
+      return res.status(201).send("Nie znaleziono typu grup");
     }
 
     return res.send(results);
@@ -37,14 +37,14 @@ router.post("/save", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        return res.status(200).send("Groups order saved correctly");
+        return res.status(200).send("Typ dodany poprawnie");
       } else {
         return res
           .status(400)
-          .send("Unexpected: Insert did not affect any rows");
+          .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
       }
 
       // res.json(results[0]);
@@ -56,6 +56,7 @@ router.post("/save", auth, async (req, res) => {
 });
 router.get("/:userId", auth, (req, res) => {
   const id = req.params.userId;
+
   db.query(
     "SELECT A,B,C,D,E,F FROM groups_bets WHERE userId=?",
     id,
@@ -63,11 +64,10 @@ router.get("/:userId", auth, (req, res) => {
       if (err) {
         console.error("Error querying database:", err);
 
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        res.status(201).send("Groups not found");
-        return res.status(500).send("Internal Server Error");
+        return res.status(201).send("Nie znaleziono typu grup");
       }
 
       return res.send(results[0]);

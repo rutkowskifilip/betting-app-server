@@ -15,7 +15,7 @@ router.post("/login", async (req, res) => {
     async (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send("Błąd wewnętrzny serwera");
         return;
       }
       if (results.length > 0) {
@@ -25,10 +25,10 @@ router.post("/login", async (req, res) => {
           res.setHeader("Authorization", "Bearer " + token);
           return res.send({ id: userId, token: token });
         } else {
-          return res.status(409).send("Incorrect password");
+          return res.status(409).send("Hasło jest niepoprawne");
         }
       } else {
-        return res.status(409).send("User with this username doesn't exist");
+        return res.status(409).send("Użytkownik z taką nazwą nie istnieje");
       }
     }
   );
@@ -46,7 +46,7 @@ router.post("/setPassword", async (req, res) => {
     (err, existingUser) => {
       if (err) {
         console.error("Error querying database:", err);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send("Błąd wewnętrzny serwera");
         return;
       }
 
@@ -54,23 +54,25 @@ router.post("/setPassword", async (req, res) => {
         // Username already exists
         return res
           .status(409)
-          .send("Username already in use. Please choose a different one.");
+          .send("Nazwa użytkownika zajęta. Proszę wybrać inną.");
       }
 
       db.query(
         "INSERT INTO users SET email=?, password= ?, username=?",
-        [password, username, email],
+        [email, password, username],
         (err, results) => {
           if (err) {
             console.error("Error querying database:", err);
-            return res.status(500).send("Internal Server Error");
+            return res.status(500).send("Błąd wewnętrzny serwera");
           }
 
           if (results.affectedRows > 0) {
-            res.status(200).send("Password has been saved");
+            res.status(200).send("Dane użytkownika zapisane poprawnie");
           } else {
-            // console.warn("Unexpected: Update did not affect any rows.");
-            res.status(400).send("Unexpected: Update did not affect any rows.");
+            // console.warn("Bład! Rządanie nie wpłynęło na żadne wiersze");
+            res
+              .status(400)
+              .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
           }
         }
       );
@@ -87,15 +89,13 @@ router.post("/add", auth, async (req, res) => {
     (err, existingUser) => {
       if (err) {
         console.error("Error querying database:", err);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send("Błąd wewnętrzny serwera");
         return;
       }
 
       if (existingUser.length > 0) {
         // User with the same email already exists
-        res
-          .status(409)
-          .send("Email address already in use. Please choose a different one.");
+        res.status(409).send("Adres email zajęty. Proszę użyć innego");
         return;
       }
 
@@ -106,16 +106,18 @@ router.post("/add", auth, async (req, res) => {
         async (err, results) => {
           if (err) {
             console.error("Error querying database:", err);
-            res.status(500).send("Internal Server Error");
+            res.status(500).send("Błąd wewnętrzny serwera");
             return;
           }
 
           if (results.affectedRows > 0) {
             const token = await jwt.createToken(email, "72h");
-            res.status(200).send("User created successfully");
+            res.status(200).send("Użytkownik stworzony poprawnie");
             mailer.sendMail(email, token);
           } else {
-            res.status(400).send("Unexpected: Insert did not affect any rows");
+            res
+              .status(400)
+              .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
           }
         }
       );
@@ -129,10 +131,10 @@ router.get("/table", auth, (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.status(201).send("Users not found");
+        return res.status(201).send("Nie znaleziono użytkowników");
       }
       return res.send(results);
     }
@@ -144,10 +146,10 @@ router.get("/all", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.status(201).send("Users not found");
+        return res.status(201).send("Nie znaleziono użytkowników");
       }
 
       return res.send(results);

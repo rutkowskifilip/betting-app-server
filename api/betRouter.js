@@ -14,14 +14,14 @@ router.post("/add", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        return res.status(200).send("Bet added succesfully");
+        return res.status(200).send("Typ dodany poprawnie");
       } else {
         return res
           .status(400)
-          .send("Unexpected: Insert did not affect any rows");
+          .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
       }
     }
   );
@@ -30,13 +30,13 @@ router.post("/add", auth, async (req, res) => {
   return;
 });
 
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", auth, async (req, res) => {
   const userId = req.params.userId;
 
   db.query("SELECT * FROM bets WHERE userId=?", userId, (err, results) => {
     if (err) {
       console.error("Error querying database:", err);
-      return res.status(500).send("Internal Server Error");
+      return res.status(500).send("Błąd wewnętrzny serwera");
     }
     if (results.length === 0) {
       return res.send([]);
@@ -55,14 +55,14 @@ router.post("/topscorer", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        return res.status(200).send("Bet added succesfully");
+        return res.status(200).send("Typ dodany poprawnie");
       } else {
         return res
           .status(400)
-          .send("Unexpected: Insert did not affect any rows");
+          .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
       }
 
       // res.json(results[0]);
@@ -83,14 +83,14 @@ router.post("/winners", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        return res.status(200).send("Bet added succesfully");
+        return res.status(200).send("Typ dodany poprawnie");
       } else {
         return res
           .status(400)
-          .send("Unexpected: Insert did not affect any rows");
+          .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
       }
     }
   );
@@ -108,7 +108,7 @@ router.get("/topscorer/:userId", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
         return res.send([]);
@@ -128,7 +128,7 @@ router.get("/winners/:userId", auth, async (req, res) => {
       if (err) {
         console.error("Error querying database:", err);
 
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
         return res.send([]);

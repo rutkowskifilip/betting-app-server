@@ -4,18 +4,15 @@ const db = require("../utils/db");
 const jwt = require("../utils/jwt");
 const operations = require("../utils/operations");
 const auth = require("../utils/auth");
-router.get("/", (req, res) => {
-  res.send("bbbb");
-});
 
 router.get("/all", auth, (req, res) => {
   db.query("SELECT * FROM matches ORDER BY date, time", (err, results) => {
     if (err) {
       console.error("Error querying database:", err);
-      return res.status(500).send("Internal Server Error");
+      return res.status(500).send("Błąd wewnętrzny serwera");
     }
     if (results.length === 0) {
-      return res.status(201).send("Matches not found");
+      return res.status(201).send("Nie znaleziono meczów");
     }
 
     return res.send(results);
@@ -31,10 +28,10 @@ router.get("/all/:userId", auth, (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.status(201).send("Matches not found");
+        return res.status(201).send("Nie znaleziono meczów");
       }
       return res.send(results);
       // res.json(results[0]);
@@ -50,10 +47,10 @@ router.get("/unbet/:userId", auth, (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.status(201).send("Matches not found");
+        return res.status(201).send("Nie znaleziono meczów");
       }
       return res.send(results);
       // res.json(results[0]);
@@ -71,14 +68,14 @@ router.post("/add", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        return res.status(200).send("Match added correctly");
+        return res.status(200).send("Mecz dodany poprawnie");
       } else {
         return res
           .status(400)
-          .send("Unexpected: Insert did not affect any rows");
+          .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
       }
 
       // res.json(results[0]);
@@ -96,14 +93,14 @@ router.post("/score", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        return res.status(200).send("Score added succesfully");
+        return res.status(200).send("Wynik dodany poprawnie");
       } else {
         return res
           .status(400)
-          .send("Unexpected: Update did not affect any rows");
+          .send("Bład! Rządanie nie wpłynęło na żadne wiersze");
       }
 
       // res.json(results[0]);
@@ -121,10 +118,10 @@ router.get("/noscore", auth, async (req, res) => {
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.status(201).send("Matches not found");
+        return res.status(201).send("Nie znaleziono meczów");
       }
 
       return res.send(results);
