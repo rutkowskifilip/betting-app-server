@@ -5,7 +5,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
-app.use(express.static("public"));
+// app.use(express.static("public"));
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -25,13 +25,13 @@ app.use(function (req, res, next) {
   next();
 });
 app.get("/", async (req, res) => {
-  return res.send("serwer");
+  return res.send("serwer on vercel");
 });
 
-app.use("/user", require("./api/userRouter"));
-app.use("/match", require("./api/matchRouter"));
-app.use("/bet", require("./api/betRouter"));
-app.use("/group", require("./api/groupRouter"));
+app.use("/user", require("./userRouter"));
+app.use("/match", require("./matchRouter"));
+app.use("/bet", require("./betRouter"));
+app.use("/group", require("./groupRouter"));
 
 app.listen(port, "192.168.0.141", () => {
   console.log(`Example app listening on port ${port}`);
