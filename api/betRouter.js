@@ -51,7 +51,6 @@ router.post("/topscorer", auth, async (req, res) => {
   db.query(
     "INSERT INTO topscorer_bets(userId,player,country,position) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE player = VALUES(player), country=VALUES(country), position=VALUES(position);",
     [userId, player, country, position],
-
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
@@ -79,7 +78,6 @@ router.post("/winners", auth, async (req, res) => {
   db.query(
     "INSERT INTO winners_bets(userId, first, second) VALUES (?,?,?) ON DUPLICATE KEY UPDATE first = VALUES(first), second=VALUE(second);",
     [userId, first, second],
-
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
@@ -104,7 +102,7 @@ router.get("/topscorer/:userId", auth, async (req, res) => {
 
   db.query(
     "SELECT player, position, country FROM topscorer_bets WHERE userId=?",
-    userId,
+    [userId],
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
@@ -123,7 +121,7 @@ router.get("/winners/:userId", auth, async (req, res) => {
   const userId = req.params.userId;
   db.query(
     "SELECT first,second FROM winners_bets WHERE userId=?",
-    userId,
+    [userId],
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
