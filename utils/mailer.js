@@ -10,6 +10,12 @@ const email = {
 const transporter = nodemailer.createTransport(email);
 module.exports = {
   sendMail: async (receiver, link) => {
+    console.log(
+      receiver,
+      link,
+      process.env.NODEMAILER_USER,
+      process.env.NODEMAILER_PASS
+    );
     try {
       let info = await transporter.sendMail({
         from: "Admin",
