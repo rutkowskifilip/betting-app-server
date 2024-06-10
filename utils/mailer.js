@@ -2,6 +2,7 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 const email = {
   service: process.env.NODEMAILER_SERVICE,
+  host: process.env.NODEMAILER_HOST,
   auth: {
     user: process.env.NODEMAILER_USER,
     pass: process.env.NODEMAILER_PASS,
