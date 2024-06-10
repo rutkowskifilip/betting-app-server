@@ -15,7 +15,7 @@ module.exports = {
         from: "Admin",
         to: receiver,
         subject: "typowanie",
-        html: `<h1>Witaj!</h1><p>${process.env.CLIENT_URL}/set-password/${link}</p>`,
+        html: `<h1>Witaj!</h1><a href="${process.env.CLIENT_URL}/set-password/${link}">Zarejestruj się</a>`,
       });
     } catch (err) {
       console.error("Error occurred:", err);

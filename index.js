@@ -3,9 +3,9 @@ const app = express();
 const port = 4000;
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const db = require("../utils/db");
-const bcrypt = require("../utils/bcrypt");
+
 require("dotenv").config();
+app.use(express.static("public"));
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -28,11 +28,11 @@ app.get("/", async (req, res) => {
   return res.send("serwer");
 });
 
-app.use("/user", require("./userRouter"));
-app.use("/match", require("./matchRouter"));
-app.use("/bet", require("./betRouter"));
-app.use("/group", require("./groupRouter"));
+app.use("/user", require("./api/userRouter"));
+app.use("/match", require("./api/matchRouter"));
+app.use("/bet", require("./api/betRouter"));
+app.use("/group", require("./api/groupRouter"));
 
-app.listen(port, () => {
+app.listen(port, "192.168.0.141", () => {
   console.log(`Example app listening on port ${port}`);
 });
