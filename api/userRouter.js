@@ -112,7 +112,7 @@ router.post("/add", auth, async (req, res) => {
           if (results.affectedRows > 0) {
             const token = await jwt.createToken(email, "72h");
             res.status(200).send("Użytkownik stworzony poprawnie");
-            mailer.sendMail(email, token);
+            await mailer.sendMail(email, token);
           } else {
             res
               .status(400)
