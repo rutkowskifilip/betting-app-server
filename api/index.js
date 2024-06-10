@@ -33,6 +33,6 @@ app.use("/match", require("./matchRouter"));
 app.use("/bet", require("./betRouter"));
 app.use("/group", require("./groupRouter"));
 
-app.listen(port, "192.168.0.141", () => {
+app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });

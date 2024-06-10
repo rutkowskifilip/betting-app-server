@@ -94,7 +94,6 @@ router.post("/add", auth, async (req, res) => {
       }
 
       if (existingUser.length > 0) {
-        // User with the same email already exists
         res.status(409).send("Adres email zajęty. Proszę użyć innego");
         return;
       }
