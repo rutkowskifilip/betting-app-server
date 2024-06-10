@@ -111,7 +111,7 @@ router.get("/topscorer/:userId", auth, async (req, res) => {
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.send([]);
+        return res.status(201).send([]);
       }
 
       return res.send(results[0]);
@@ -131,7 +131,7 @@ router.get("/winners/:userId", auth, async (req, res) => {
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.length === 0) {
-        return res.send([]);
+        return res.status(201).send([]);
       }
 
       return res.send(results);
