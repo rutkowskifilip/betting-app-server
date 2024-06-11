@@ -25,7 +25,7 @@ module.exports = {
   updateBetsPoints: () => {
     db.query("UPDATE bets SET points=0;", [], () => {});
     db.query(
-      `UPDATE bets b JOIN matches m ON b.matchId = m.id SET b.points = CASE WHEN m.score = b.betScore THEN ${perfectBet} * m.weight WHEN ((SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', 1) AND SUBSTRING_INDEX(m.score, ':', -1) = SUBSTRING_INDEX(b.betScore, ':', -1)) OR ((SUBSTRING_INDEX(m.score, ':', 1) > SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) > SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) < SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) < SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', -1)))) THEN ${goodBet} * m.weight ELSE 0 END;`,
+      `UPDATE bets b JOIN matches m ON b.matchId = m.id SET b.points = CASE WHEN m.score = b.betScore THEN ${perfectBet} * m.weight WHEN ((SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', 1) AND SUBSTRING_INDEX(m.score, ':', -1) = SUBSTRING_INDEX(b.betScore, ':', -1)) OR ((SUBSTRING_INDEX(m.score, ':', 1) > SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) > SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) < SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) < SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', -1) AND m.score <> ""))) THEN ${goodBet} * m.weight ELSE 0 END;`,
       [],
       () => {}
     );
