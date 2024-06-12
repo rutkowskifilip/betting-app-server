@@ -66,7 +66,7 @@ module.exports = {
   updateTopScorerPoints: () => {
     db.query("UPDATE topscorer_bets SET points=0;", [], () => {});
     db.query(
-      `UPDATE topscorer_bets b JOIN (SELECT player FROM topScorer_bets WHERE userId = 0) temp ON b.player = temp.player SET b.points = b.points + ${topScorer} WHERE b.userId <> 0;`,
+      `UPDATE topscorer_bets b JOIN (SELECT player FROM topscorer_bets WHERE userId = 0) temp ON b.player = temp.player SET b.points = b.points + ${topScorer} WHERE b.userId <> 0;`,
       [],
       () => {}
     );
