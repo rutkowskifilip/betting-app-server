@@ -7,23 +7,20 @@ const groupdOrder = process.env.GROUP_ORDER_POINTS;
 const winners = process.env.WINNERS_POINTS;
 module.exports = {
   updatePoints: () => {
-    db.query("UPDATE users SET points=0;", [], () => {
-      db.query(
-        `UPDATE users AS u JOIN (SELECT userId, SUM(points) AS totalPoints, SUM(CASE WHEN points IN (${perfectBet}, ${
-          perfectBet * 2
-        }) THEN 1 ELSE 0 END) AS perfectBets, SUM(CASE WHEN points IN (${goodBet}, ${
-          goodBet * 2
-        }) THEN 1 ELSE 0 END) AS goodBets FROM bets GROUP BY userId) AS aggregated_data ON u.id = aggregated_data.userId SET u.points = aggregated_data.totalPoints, u.perfectBets =  aggregated_data.perfectBets, u.goodBets = aggregated_data.goodBets;`,
-        [],
-        () => {
-          db.query(
-            "UPDATE users AS u JOIN (SELECT userId, COALESCE(SUM(points), 0) AS totalPoints FROM (SELECT userId, points FROM winners_bets UNION ALL SELECT userId, points FROM groups_bets UNION ALL SELECT userId, points FROM topscorer_bets) AS all_bets GROUP BY userId) AS aggregated_data ON u.id = aggregated_data.userId SET u.points = u.points + aggregated_data.totalPoints;",
-            [],
-            () => {}
-          );
-        }
-      );
-    });
+    db.query(
+      `UPDATE users AS u JOIN (SELECT userId, SUM(points) AS totalPoints, SUM(CASE WHEN points IN (${perfectBet}, ${
+        perfectBet * 2
+      }) THEN 1 ELSE 0 END) AS perfectBets, SUM(CASE WHEN points IN (${goodBet}, ${
+        goodBet * 2
+      }) THEN 1 ELSE 0 END) AS goodBets FROM bets GROUP BY userId) AS aggregated_data ON u.id = aggregated_data.userId SET u.points = aggregated_data.totalPoints, u.perfectBets =  aggregated_data.perfectBets, u.goodBets = aggregated_data.goodBets;`,
+      [],
+      () => {}
+    );
+    db.query(
+      "UPDATE users AS u JOIN (SELECT userId, COALESCE(SUM(points), 0) AS totalPoints FROM (SELECT userId, points FROM winners_bets UNION ALL SELECT userId, points FROM groups_bets UNION ALL SELECT userId, points FROM topscorer_bets) AS all_bets GROUP BY userId) AS aggregated_data ON u.id = aggregated_data.userId SET u.points = u.points + aggregated_data.totalPoints;",
+      [],
+      () => {}
+    );
   },
   updateBetsPoints: () => {
     db.query("UPDATE bets SET points=0;", [], () => {});
