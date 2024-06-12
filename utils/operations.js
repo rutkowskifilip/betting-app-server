@@ -7,6 +7,7 @@ const groupdOrder = process.env.GROUP_ORDER_POINTS;
 const winners = process.env.WINNERS_POINTS;
 module.exports = {
   updatePoints: () => {
+    db.query("UPDATE bets SET points=0;", [], () => {});
     db.query(
       `UPDATE users AS u JOIN (SELECT userId, SUM(points) AS totalPoints, SUM(CASE WHEN points IN (${perfectBet}, ${
         perfectBet * 2
