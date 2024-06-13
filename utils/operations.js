@@ -113,7 +113,7 @@ module.exports = {
 
   updateTopScorerPoints: async () => {
     await new Promise((resolve, reject) => {
-      db.query("UPDATE top_scorer SET points=0;", [], (err, results) => {
+      db.query("UPDATE topscorer_bets SET points=0;", [], (err, results) => {
         if (err) {
           return reject(err);
         }
