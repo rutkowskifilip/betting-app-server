@@ -96,6 +96,8 @@ router.post("/score", auth, async (req, res) => {
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
+        operations.updateBetsPoints();
+        operations.updatePoints();
         return res.status(200).send("Wynik dodany poprawnie");
       } else {
         return res
@@ -106,9 +108,6 @@ router.post("/score", auth, async (req, res) => {
       // res.json(results[0]);
     }
   );
-
-  operations.updateBetsPoints();
-  operations.updatePoints();
 });
 
 router.get("/noscore", auth, async (req, res) => {

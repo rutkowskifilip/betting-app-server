@@ -64,17 +64,17 @@ module.exports = {
     );
   },
   updateTopScorerPoints: () => {
-    db.query("UPDATE topscorer_bets SET points=0;", [], () => {});
+    // db.query("UPDATE topscorer_bets SET points=0;", [], () => {});
     db.query(
-      `UPDATE topscorer_bets b JOIN (SELECT player FROM topscorer_bets WHERE userId = 0) temp ON b.player = temp.player SET b.points = b.points + ${topScorer} WHERE b.userId <> 0;`,
+      `UPDATE topscorer_bets b JOIN (SELECT player FROM topscorer_bets WHERE userId = 0) temp ON b.player = temp.player SET b.points = ${topScorer} WHERE b.userId <> 0;`,
       [],
       () => {}
     );
   },
   updateWinnersPoints: () => {
-    db.query("UPDATE winners_bets SET points=0;", [], () => {});
+    // db.query("UPDATE winners_bets SET points=0;", [], () => {});
     db.query(
-      `UPDATE winners_bets u JOIN (SELECT first, second FROM winners_bets WHERE userId = 0) temp ON 1=1 SET u.points = u.points + (CASE WHEN u.first = temp.first THEN ${winners} ELSE 0 END) + (CASE WHEN u.second = temp.second THEN ${winners} ELSE 0 END)  WHERE u.userId <> 0;`,
+      `UPDATE winners_bets u JOIN (SELECT first, second FROM winners_bets WHERE userId = 0) temp ON 1=1 SET u.points = (CASE WHEN u.first = temp.first THEN ${winners} ELSE 0 END) + (CASE WHEN u.second = temp.second THEN ${winners} ELSE 0 END)  WHERE u.userId <> 0;`,
       [],
       () => {}
     );
