@@ -90,14 +90,17 @@ router.post("/score", auth, async (req, res) => {
     "UPDATE matches SET score=? WHERE id=?",
     [score, matchId],
 
-    (err, results) => {
+    async (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        operations.updateBetsPoints();
-        operations.updatePoints();
+        const updateBets = await operations.updateBetsPoints();
+        if (updateBets) {
+          operations.updatePoints();
+        }
+
         return res.status(200).send("Wynik dodany poprawnie");
       } else {
         return res
