@@ -68,53 +68,69 @@ module.exports = {
       );
     });
   },
-  updateGroupsPoints: () => {
-    db.query("UPDATE groups_bets SET points=0;", [], () => {});
-    db.query(
-      `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.A = temp.A AND temp.A IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
-      [],
-      () => {}
-    );
-    db.query(
-      `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.B = temp.B AND temp.B IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
-      [],
-      () => {}
-    );
-    db.query(
-      `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.C = temp.C AND temp.C IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
-      [],
-      () => {}
-    );
-    db.query(
-      `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.D = temp.D AND temp.D IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
-      [],
-      () => {}
-    );
-    db.query(
-      `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.E = temp.E AND temp.E IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
-      [],
-      () => {}
-    );
-    db.query(
-      `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.F = temp.F AND temp.F IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
-      [],
-      () => {}
-    );
+  updateGroupsPoints: async () => {
+    try {
+      await new Promise((resolve, reject) => {
+        db.query("UPDATE groups_bets SET points=0;", [], (err, results) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(results);
+        });
+      });
+
+      const queries = [
+        `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.A = temp.A AND temp.A IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
+        `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.B = temp.B AND temp.B IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
+        `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.C = temp.C AND temp.C IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
+        `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.D = temp.D AND temp.D IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
+        `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.E = temp.E AND temp.E IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
+        `UPDATE groups_bets AS gb1 JOIN (SELECT A, B, C, D, E, F FROM groups_bets WHERE userId = 0) AS temp ON (gb1.F = temp.F AND temp.F IS NOT NULL) SET gb1.points = gb1.points + ${groupdOrder} WHERE gb1.userId <> 0;`,
+      ];
+
+      for (const query of queries) {
+        await new Promise((resolve, reject) => {
+          db.query(query, [], (err, results) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(results);
+          });
+        });
+      }
+    } catch (error) {
+      throw new Error("Error updating groups points: " + error.message);
+    }
   },
+
   updateTopScorerPoints: () => {
     // db.query("UPDATE topscorer_bets SET points=0;", [], () => {});
-    db.query(
-      `UPDATE topscorer_bets b JOIN (SELECT player FROM topscorer_bets WHERE userId = 0) temp ON b.player = temp.player SET b.points = ${topScorer} WHERE b.userId <> 0;`,
-      [],
-      () => {}
-    );
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE topscorer_bets b JOIN (SELECT player FROM topscorer_bets WHERE userId = 0) temp ON b.player = temp.player SET b.points = ${topScorer} WHERE b.userId <> 0;`,
+        [],
+        (err, results) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(results);
+        }
+      );
+    });
   },
   updateWinnersPoints: () => {
     // db.query("UPDATE winners_bets SET points=0;", [], () => {});
-    db.query(
-      `UPDATE winners_bets u JOIN (SELECT first, second FROM winners_bets WHERE userId = 0) temp ON 1=1 SET u.points = (CASE WHEN u.first = temp.first THEN ${winners} ELSE 0 END) + (CASE WHEN u.second = temp.second THEN ${winners} ELSE 0 END)  WHERE u.userId <> 0;`,
-      [],
-      () => {}
-    );
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE winners_bets u JOIN (SELECT first, second FROM winners_bets WHERE userId = 0) temp ON 1=1 SET u.points = (CASE WHEN u.first = temp.first THEN ${winners} ELSE 0 END) + (CASE WHEN u.second = temp.second THEN ${winners} ELSE 0 END)  WHERE u.userId <> 0;`,
+        [],
+        (err, results) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(results);
+        }
+      );
+    });
   },
 };

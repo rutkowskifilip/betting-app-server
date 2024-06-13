@@ -96,8 +96,8 @@ router.post("/score", auth, async (req, res) => {
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        const updateBets = await operations.updateBetsPoints();
-        if (updateBets) {
+        const bets = await operations.updateBetsPoints();
+        if (bets) {
           await operations.updatePoints();
         }
 

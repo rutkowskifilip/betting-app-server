@@ -34,12 +34,18 @@ router.post("/save", auth, async (req, res) => {
       groups[4].teams.join(","),
       groups[5].teams.join(","),
     ],
-    (err, results) => {
+    async (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
+        if (parseInt(id) === 0) {
+          const groups = await operations.updateGroupsPoints();
+          if (groups) {
+            operations.updatePoints();
+          }
+        }
         return res.status(200).send("Typ dodany poprawnie");
       } else {
         return res
@@ -50,8 +56,7 @@ router.post("/save", auth, async (req, res) => {
       // res.json(results[0]);
     }
   );
-  operations.updateGroupsPoints();
-  operations.updatePoints();
+
   return;
 });
 router.get("/:userId", auth, (req, res) => {

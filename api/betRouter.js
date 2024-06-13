@@ -17,8 +17,6 @@ router.post("/add", auth, async (req, res) => {
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
-        // operations.updateBetsPoints();
-        // operations.updatePoints();
         return res.status(200).send("Typ dodany poprawnie");
       } else {
         return res
@@ -52,15 +50,17 @@ router.post("/topscorer", auth, async (req, res) => {
   db.query(
     "INSERT INTO topscorer_bets(userId,player,country,position) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE player = VALUES(player), country=VALUES(country), position=VALUES(position);",
     [userId, player, country, position],
-    (err, results) => {
+    async (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
         if (parseInt(userId) === 0) {
-          operations.updateTopScorerPoints();
-          operations.updatePoints();
+          const topScorer = await operations.updateTopScorerPoints();
+          if (topScorer) {
+            await operations.updatePoints();
+          }
         }
         return res.status(200).send("Typ dodany poprawnie");
       } else {
@@ -82,15 +82,17 @@ router.post("/winners", auth, async (req, res) => {
   db.query(
     "INSERT INTO winners_bets(userId, first, second) VALUES (?,?,?) ON DUPLICATE KEY UPDATE first = VALUES(first), second=VALUE(second);",
     [userId, first, second],
-    (err, results) => {
+    async (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
         return res.status(500).send("Błąd wewnętrzny serwera");
       }
       if (results.affectedRows > 0) {
         if (parseInt(userId) === 0) {
-          operations.updateWinnersPoints();
-          operations.updatePoints();
+          const winners = await operations.updateWinnersPoints();
+          if (winners) {
+            await operations.updatePoints();
+          }
         }
         return res.status(200).send("Typ dodany poprawnie");
       } else {
