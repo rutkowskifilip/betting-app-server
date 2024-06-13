@@ -41,10 +41,9 @@ router.post("/save", auth, async (req, res) => {
       }
       if (results.affectedRows > 0) {
         if (parseInt(id) === 0) {
-          const groups = await operations.updateGroupsPoints();
-          if (groups) {
-            operations.updatePoints();
-          }
+          await operations.updateGroupsPoints();
+
+          await operations.updatePoints();
         }
         return res.status(200).send("Typ dodany poprawnie");
       } else {
