@@ -6,7 +6,15 @@ const topScorer = process.env.TOP_SCORER_POINTS;
 const groupdOrder = process.env.GROUP_ORDER_POINTS;
 const winners = process.env.WINNERS_POINTS;
 module.exports = {
-  updatePoints: () => {
+  updatePoints: async () => {
+    await new Promise((resolve, reject) => {
+      db.query("UPDATE users SET points=0;", [], (err, results) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(results);
+      });
+    });
     return new Promise((resolve, reject) => {
       db.query(
         `UPDATE users AS u 
