@@ -7,28 +7,66 @@ const groupdOrder = process.env.GROUP_ORDER_POINTS;
 const winners = process.env.WINNERS_POINTS;
 module.exports = {
   updatePoints: () => {
-    db.query(
-      `UPDATE users AS u JOIN (SELECT userId, SUM(points) AS totalPoints, SUM(CASE WHEN points IN (${perfectBet}, ${
-        perfectBet * 2
-      }) THEN 1 ELSE 0 END) AS perfectBets, SUM(CASE WHEN points IN (${goodBet}, ${
-        goodBet * 2
-      }) THEN 1 ELSE 0 END) AS goodBets FROM bets GROUP BY userId) AS aggregated_data ON u.id = aggregated_data.userId SET u.points = aggregated_data.totalPoints, u.perfectBets =  aggregated_data.perfectBets, u.goodBets = aggregated_data.goodBets;`,
-      [],
-      () => {}
-    );
-    db.query(
-      "UPDATE users AS u JOIN (SELECT userId, COALESCE(SUM(points), 0) AS totalPoints FROM (SELECT userId, points FROM winners_bets UNION ALL SELECT userId, points FROM groups_bets UNION ALL SELECT userId, points FROM topscorer_bets) AS all_bets GROUP BY userId) AS aggregated_data ON u.id = aggregated_data.userId SET u.points = u.points + aggregated_data.totalPoints;",
-      [],
-      () => {}
-    );
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE users AS u 
+                 JOIN (SELECT userId, SUM(points) AS totalPoints, 
+                       SUM(CASE WHEN points IN (${perfectBet}, ${
+          perfectBet * 2
+        }) THEN 1 ELSE 0 END) AS perfectBets, 
+                       SUM(CASE WHEN points IN (${goodBet}, ${
+          goodBet * 2
+        }) THEN 1 ELSE 0 END) AS goodBets 
+                       FROM bets 
+                       GROUP BY userId) AS aggregated_data 
+                 ON u.id = aggregated_data.userId 
+                 SET u.points = aggregated_data.totalPoints, 
+                     u.perfectBets = aggregated_data.perfectBets, 
+                     u.goodBets = aggregated_data.goodBets;`,
+        [],
+        (err, results) => {
+          if (err) {
+            return reject(err);
+          }
+          // Perform the second query after the first one completes
+          db.query(
+            `UPDATE users AS u 
+                         JOIN (SELECT userId, COALESCE(SUM(points), 0) AS totalPoints 
+                               FROM (SELECT userId, points FROM winners_bets 
+                                     UNION ALL 
+                                     SELECT userId, points FROM groups_bets 
+                                     UNION ALL 
+                                     SELECT userId, points FROM topscorer_bets) AS all_bets 
+                               GROUP BY userId) AS aggregated_data 
+                         ON u.id = aggregated_data.userId 
+                         SET u.points = u.points + aggregated_data.totalPoints;`,
+            [],
+            (err2, results2) => {
+              if (err2) {
+                return reject(err2);
+              }
+              resolve(results2);
+            }
+          );
+        }
+      );
+    });
   },
+
   updateBetsPoints: () => {
     // db.query("UPDATE bets SET points=0;", [], () => {});
-    return db.query(
-      `UPDATE bets b JOIN matches m ON b.matchId = m.id SET b.points = CASE WHEN (m.score = '' OR  m.score = NULL) THEN 0 WHEN m.score = b.betScore THEN ${perfectBet} * m.weight WHEN ((SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', 1) AND SUBSTRING_INDEX(m.score, ':', -1) = SUBSTRING_INDEX(b.betScore, ':', -1)) OR ((SUBSTRING_INDEX(m.score, ':', 1) > SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) > SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) < SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) < SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', -1)))) THEN ${goodBet} * m.weight ELSE 0 END;`,
-      [],
-      () => {}
-    );
+    return new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE bets b JOIN matches m ON b.matchId = m.id SET b.points = CASE WHEN (m.score = '' OR  m.score = NULL) THEN 0 WHEN m.score = b.betScore THEN ${perfectBet} * m.weight WHEN ((SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', 1) AND SUBSTRING_INDEX(m.score, ':', -1) = SUBSTRING_INDEX(b.betScore, ':', -1)) OR ((SUBSTRING_INDEX(m.score, ':', 1) > SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) > SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) < SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) < SUBSTRING_INDEX(b.betScore, ':', -1)) OR (SUBSTRING_INDEX(m.score, ':', 1) = SUBSTRING_INDEX(m.score, ':', -1) AND SUBSTRING_INDEX(b.betScore, ':', 1) = SUBSTRING_INDEX(b.betScore, ':', -1)))) THEN ${goodBet} * m.weight ELSE 0 END;`,
+        [],
+        (err, results) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(results);
+        }
+      );
+    });
   },
   updateGroupsPoints: () => {
     db.query("UPDATE groups_bets SET points=0;", [], () => {});

@@ -98,7 +98,7 @@ router.post("/score", auth, async (req, res) => {
       if (results.affectedRows > 0) {
         const updateBets = await operations.updateBetsPoints();
         if (updateBets) {
-          operations.updatePoints();
+          await operations.updatePoints();
         }
 
         return res.status(200).send("Wynik dodany poprawnie");
