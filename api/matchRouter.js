@@ -23,7 +23,7 @@ router.get("/all", auth, (req, res) => {
 router.get("/all/:userId", auth, (req, res) => {
   const userId = req.params.userId;
   db.query(
-    "SELECT matches.*, bets.betScore FROM matches LEFT JOIN bets ON matches.id = bets.matchId AND bets.userId = ? ORDER BY date, time",
+    "SELECT matches.*, bets.betScore, bets.points FROM matches LEFT JOIN bets ON matches.id = bets.matchId AND bets.userId = ? ORDER BY date, time",
     userId,
     (err, results) => {
       if (err) {
