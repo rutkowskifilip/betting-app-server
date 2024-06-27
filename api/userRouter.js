@@ -127,7 +127,7 @@ router.post("/add", auth, async (req, res) => {
 
 router.get("/table", auth, (req, res) => {
   db.query(
-    "SELECT * FROM users u WHERE u.id !=0 ORDER BY points DESC, perfectBets DESC, goodBets DESC;",
+    "SELECT *, gb.points FROM users u LEFT JOIN (SELECT userId, points FROM groups_bets) gb ON u.id = gb.userId WHERE u.id != 0 ORDER BY u.points DESC, u.perfectBets DESC, u.goodBets DESC;",
     (err, results) => {
       if (err) {
         console.error("Error querying database:", err);
